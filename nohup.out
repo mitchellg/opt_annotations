@@ -1,0 +1,23 @@
+ * Running on http://45.56.123.166:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
+128.151.150.18 - - [23/Feb/2015 21:00:01] "GET /get_session?callback=jQuery182007686398830264807_1424725205582&session=sih0c63hktymn29&_=1424725205709 HTTP/1.1" 200 -
+128.151.150.18 - - [23/Feb/2015 21:00:01] "GET /get_session?callback=jQuery18208908816683106124_1424725204183&session=sih0c63hktymn29&_=1424725204289 HTTP/1.1" 200 -
+
+Usage:
+ kill [options] <pid> [...]
+
+Options:
+ <pid> [...]            send signal to every <pid> listed
+ -<signal>, -s, --signal <signal>
+                        specify the <signal> to be sent
+ -l, --list=[<signal>]  list all signal names, or convert one to a name
+ -L, --table            list all signal names in a nice table
+
+ -h, --help     display this help and exit
+ -V, --version  output version information and exit
+
+For more details see kill(1).
+128.151.150.18 - - [23/Feb/2015 21:00:17] "GET /get_session?callback=jQuery18207774809040129185_1424725207639&session=sih0c63hktymn29&_=1424725207734 HTTP/1.1" 200 -
+128.151.150.18 - - [23/Feb/2015 21:00:20] "GET /get_session?callback=jQuery18209835334855597466_1424725224632&session=sih0c63hktymn29&_=1424725224708 HTTP/1.1" 200 -
+ * Running on http://45.56.123.166:5000/ (Press CTRL+C to quit)
+ * Restarting with stat
