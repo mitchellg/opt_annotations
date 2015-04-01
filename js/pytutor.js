@@ -859,31 +859,52 @@ ExecutionVisualizer.prototype.loadAnnotations = debounce(function() {
   for(var i = 0; i < myViz.allAnnotationBubbles.length; i++){
     var bubble = myViz.allAnnotationBubbles[i];
     myViz.annotations[bubble.qTipContentID()] = [];
+    myViz.questions[bubble.qTipContentID()] = [];
   }
+
   var data = {session: myViz.session, step: myViz.curInstr};
+
   $.ajax({
     dataType: "jsonp",
     type: "POST",
-    url: 'http://45.56.123.166:5000/get_annotations',
+    url: 'http://45.56.123.166:5000/get_questions',
     data: data,
     success: function(d){
-      var annotations = d;
-      for(var i = 0; i < d.length; i++){
-        annotation_item = annotations[i];
-        line = annotation_item[3];
-        myViz.annotations[line].push(annotation_item);
+      if (d != ","){
+        var questions = d;
+        for(var i = 0; i < questions.length; i++){
+          questions_item = questions[i];
+          line = questions_item[1];
+          question = questions_item[0];
+          myViz.questions[line].push(question);
+        }
       }
 
-      $.each(myViz.allAnnotationBubbles, function(i, e) {
-        e.enterEditMode();
+      $.ajax({
+        dataType: "jsonp",
+        type: "POST",
+        url: 'http://45.56.123.166:5000/get_annotations',
+        data: data,
+        success: function(d){
+          var annotations = d;
+          for(var i = 0; i < d.length; i++){
+            annotation_item = annotations[i];
+            line = annotation_item[3];
+            myViz.annotations[line].push(annotation_item);
+          }
+
+          $.each(myViz.allAnnotationBubbles, function(i, e) {
+            e.enterEditMode();
+          });
+
+          // myViz.showVizHeaderEditMode();
+
+          // redraw all connectors and bubbles in new vertical position ..
+          myViz.redrawConnectors();
+          myViz.redrawAllAnnotationBubbles();
+
+        }
       });
-
-      // myViz.showVizHeaderEditMode();
-
-      // redraw all connectors and bubbles in new vertical position ..
-      myViz.redrawConnectors();
-      myViz.redrawAllAnnotationBubbles();
-
     }
   });
 }, 250);
@@ -893,6 +914,7 @@ ExecutionVisualizer.prototype.enterEditAnnotationsMode = function() {
 
   // Will store annotations for this current level
   this.annotations = {};
+  this.questions = {};
 
   // TODO: check for memory leaks!!!
   var myViz = this;
@@ -3784,7 +3806,6 @@ function AnnotationBubble(parentViz, type, domID) {
 
   this.qtipHidden = false; // is there a qtip object present but hidden? (TODO: kinda confusing)
 }
-
 AnnotationBubble.prototype.showStub = function() {
   // assert(this.state == 'invisible' || this.state == 'edit');
   // assert(this.text == '');
@@ -3810,7 +3831,8 @@ AnnotationBubble.prototype.showStub = function() {
   }
 
   $(myBubble.hashID).qtip($.extend({}, qtipShared, {
-    content: ' ',
+    content: '<div><a style="font-size:12px; color:blue;" href="#">' + myBubble.getQuestionForBubble() + '</a></div>',
+    // content: ' ',
     id: myBubble.domID,
     position: {
       my: myBubble.my,
@@ -3843,7 +3865,7 @@ AnnotationBubble.prototype.showStub = function() {
           // Don't show tooltip if any annotation edit window is open
           else if (bubble.state == 'edit') return;
         }
-        myBubble.showTooltip();
+        if(getUrlParameter("comparisonVoting") != "true") myBubble.showTooltip();
         myBubble.parentViz.logEvent("hover", myBubble);
       },
       function() {
@@ -3871,13 +3893,19 @@ AnnotationBubble.prototype.showEditor = function() {
   var step = myBubble.parentViz.curInstr;
 
   var annotations_for_bubble = myBubble.parentViz.annotations[line];
-  var annotations_html = "<div style='max-height: 150px; overflow: auto; width:200px'>";
-  for(var i = 0; i < annotations_for_bubble.length; i++){
-    annotation_text = annotations_for_bubble[i][0];
-    annotation_id = annotations_for_bubble[i][2];
-    annotations_html = annotations_html + '<p> <input id="upvote_annotation_' + annotation_id + '" type="image" src="css/thumbs-up-icon-black-hi.png" style="width:10px;" alt="Upvote" onclick="upvote_annotation(' + annotation_id + ')">  ' + annotation_text + '</p><hr>'; 
+  var annotations_html = "";
+
+  if(getUrlParameter("comparisonVoting") != "true"){
+    var annotations_html = "<div style='max-height: 150px; overflow: auto; width:200px'>";
+    for(var i = 0; i < annotations_for_bubble.length; i++){
+      annotation_text = annotations_for_bubble[i][0];
+      annotation_id = annotations_for_bubble[i][2];
+      annotations_html = annotations_html + '<p> <input id="upvote_annotation_' + annotation_id + '" type="image" src="css/thumbs-up-icon-black-hi.png" style="width:10px;" alt="Upvote" onclick="upvote_annotation(' + annotation_id + ')">  ' + annotation_text + '</p><hr>'; 
+    }
+    annotations_html = annotations_html + "</div>"
   }
-  var ta = annotations_html + '</div><div style="margin-top:10px;">What does this part of the code do?</div><textarea class="bubbleInputText"></textarea><button id="save" type="button">Save</button><button id="cancel" type="button">Cancel</button>';
+
+  var ta = annotations_html + '<div style="margin-top:10px;">' + myBubble.getQuestionForBubble() + '</div><textarea class="bubbleInputText"></textarea><button id="save" type="button">Save</button><button id="cancel" type="button">Cancel</button>';
   // destroy then create a new tip:
   myBubble.destroyQTip();
   $(myBubble.hashID).qtip($.extend({}, qtipShared, {
@@ -3915,6 +3943,10 @@ AnnotationBubble.prototype.showEditor = function() {
           url: 'http://45.56.123.166:5000/post_annotation',
           data: data,
           success: function(d){
+            if(getUrlParameter("comparisonVoting") == "true"){
+              var id = d['id'][0];
+              if(annotations_for_bubble.length > 0) myBubble.showComparisonModal(annotation, id);
+            }
             myBubble.parentViz.loadAnnotations();
             $(myBubble.qTipID()).addClass('ui-tooltip-pgbootstrap-has-content');
             console.log("posted annotation");
@@ -3947,7 +3979,7 @@ AnnotationBubble.prototype.showTooltip = function() {
     annotation_text = annotations_for_bubble[i][0];
     tooltip_html = tooltip_html + '<p>' + annotation_text + '</p><hr>'; 
   }
-  var ta = tooltip_html + '</div><div style="margin-top:10px;"><a style="font-size:14px; color:blue;" href="#">add annotation</a></div>';
+  var ta = tooltip_html + '</div><div style="margin-top:10px;"><a style="font-size:12px; color:blue;" href="#">' + myBubble.getQuestionForBubble() + '</a></div>';
   if(ta){
     // destroy then create a new tip:
     myBubble.destroyQTip();
@@ -3985,6 +4017,82 @@ AnnotationBubble.prototype.showTooltip = function() {
   this.state = 'tooltip';
 }
 
+AnnotationBubble.prototype.showComparisonModal = function(annotation, id) {
+  var myBubble = this;
+  var new_annotation_id = id;
+  var new_annotation = annotation;
+
+  var annotation_counter = 0;
+  var annotations_for_bubble = myBubble.parentViz.annotations[line];
+
+  var old_annotation_text = annotations_for_bubble[annotation_counter][0];
+  var old_annotation_id = annotations_for_bubble[annotation_counter][2];
+
+  myBubble.destroyQTip();
+  $.modal("<div id='modalWindow'><h3>How do these annotations compare to yours?</h3> <p><b>Your annotation:</b></p><p>" + new_annotation + "</p> <hr> <p><b>Alternate annotation:</b></p><p id='alternateAnnotation'>" + old_annotation_text + "</p><br/><p><b>This alternate annotation is: </b><button style='margin-right:5px; height:30px;' id='better' type='button'>better than mine</button><button id='worse' style='margin-right:5px; height:30px;' type='button'>worse than mine</button><button id='skip' style='margin-right:5px; height:30px;' type='button'>skip to next one</button></div>", 
+    {
+      overlayClose: false,
+      onClose: function() {
+        myBubble.showStub();
+        $.modal.close();
+      },
+      minHeight: 400,
+      minWidth: 600,
+      containerCss: {
+        backgroundColor: "white",
+        color: "black",
+        fontFamily: "verdana, arial, helvetica, sans-serif"
+      }
+    }
+  );
+
+  $("#better").on("click", function(){
+    logComparisonVote("better");
+  });
+
+  $("#worse").on("click", function(){
+    logComparisonVote("worse");
+  });
+
+  $("#skip").on("click", function(){
+    logComparisonVote("skip");
+  });
+
+  function logComparisonVote(vote){
+    if(annotation_counter < annotations_for_bubble.length - 1){
+      annotation_counter++;
+      old_annotation_text = annotations_for_bubble[annotation_counter][0];
+      old_annotation_id = annotations_for_bubble[annotation_counter][2];
+
+      $("#alternateAnnotation").html(old_annotation_text);
+    }
+    else {
+      $("#modalWindow").html("<h1>Thanks!</h1>");
+      window.setTimeout(function(){
+        $.modal.close();
+      }, 3000);
+    }
+
+    if (!localStorage.getItem('opt_uuid')) {
+      localStorage.setItem('opt_uuid', generateUUID());
+    }
+
+    var mg_user_id = localStorage.getItem('opt_uuid');
+    var pg_user_id = getUrlParameter("opt_uuid");  
+
+    var time = new Date().getTime();
+
+    $.ajax({
+      dataType: "jsonp",
+      type: "POST",
+      url: 'http://45.56.123.166:5000/log_comparison_vote',
+      data: {annotation_id_1: new_annotation_id, annotation_id_2: old_annotation_id, vote: vote, mg_user_id: mg_user_id, pg_user_id: pg_user_id, time: time},
+      success: function(d){
+        console.log("logged vote");
+      }
+    });
+  }
+}
 
 AnnotationBubble.prototype.bindViewerClickHandler = function() {
   var myBubble = this;
@@ -4143,6 +4251,17 @@ AnnotationBubble.prototype.redrawCodelineBubble = function() {
 
 AnnotationBubble.prototype.redrawBubble = function() {
   $(this.hashID).qtip('reposition');
+}
+
+AnnotationBubble.prototype.getQuestionForBubble = function() {
+  var myBubble = this;
+
+  var line = myBubble.qTipContentID();
+
+  if (line in myBubble.parentViz.questions) var question_for_bubble = myBubble.parentViz.questions[line];
+  if(!question_for_bubble || question_for_bubble == "") question_for_bubble = "What does this part of the code do?";
+
+  return question_for_bubble;
 }
 
 

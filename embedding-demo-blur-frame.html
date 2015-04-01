@@ -45,11 +45,11 @@
 </div>
 
 <script>
-	var sessions = ["v71ludvky9442t9", "g685ii5eqb1kbj4i"];
+	var sessions = ["bg5apyyxo7z4zpvi", "jo8ymq48yse89f6r"];
 	var session = sessions[Math.floor(Math.random() * sessions.length)];
 
 	var uuid = getUrlParameter("opt_uuid");
-	var urlForIframeLink = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo.html?session=" + session + "&jumpToRandomStep=true&opt_uuid=" + uuid;
+	var urlForIframeLink = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo.html?session=" + session + "&jumpToRandomStep=true&opt_uuid=" + uuid + "&comparisonVoting=true";
 	$("#urlInFrame").attr("href", urlForIframeLink);
 
 	var urlForIframe = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo-blur.html?session=" + session + "&opt_uuid=" + uuid;

@@ -622,7 +622,8 @@ textarea.bubbleInputText {
 	background-clip: padding-box;
 }
   .ui-tooltip-pgbootstrap-has-content{
-    background-color: yellow;
+    background-color: #F9FFA3;
+    /*background-color: yellow;*/
   }
 
   .ui-tooltip-pgbootstrap-green{

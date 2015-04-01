@@ -40,16 +40,15 @@ def post_annotation():
 	g.db.commit()
 	# for row in query_db('select * from annotations;'):
 	#   app.logger.info(row)
-	return jsonify(result="success")
+	insert_id = query_db('SELECT last_insert_rowid()')
+	return jsonify(id=insert_id[0])
 
 @app.route('/get_annotations', methods=['POST', 'GET'])
 def get_annotations():
 	step = request.args.get('step', '')
 	session = request.args.get('session', '')
-	annotations = {};
 	result = query_db('select annotation, votes, id, line from annotations where session = ? AND step = ? order by votes desc;', [session, step])
 	# app.logger.info(row[3])
-	# annotations.append(row[3])
 	return jsonify(result)
 
 @app.route('/post_session', methods=['POST', 'GET'])
@@ -62,12 +61,45 @@ def post_app_state():
 	g.db.commit()
 	return jsonify(result="success")
 
+@app.route('/log_comparison_vote', methods=['POST', 'GET'])
+def log_comparison_vote():
+	# annotation 2 is x than annotation 1
+	annotation_id_1 = request.args.get('annotation_id_1', '')
+	annotation_id_2 = request.args.get('annotation_id_2', '')
+	vote = request.args.get('vote', '')
+	mg_user_id = request.args.get('mg_user_id', '')
+	pg_user_id = request.args.get('pg_user_id', '')
+	time = request.args.get('time', '')
+
+	g.db.execute('insert into comparison_votes(annotation_id_1, annotation_id_2, vote, mg_user_id, pg_user_id, time) values (?, ?, ?, ?, ?, ?);', [annotation_id_1, annotation_id_2, vote, mg_user_id, pg_user_id, time])
+	g.db.commit()
+	return jsonify(result="success")
+
+@app.route('/add_questions_to_db', methods=['POST', 'GET'])
+def add_questions_to_db():
+	session = "jo8ymq48yse89f6r"
+	num_steps = 20
+
+	for x in range(0, num_steps):
+		g.db.execute('insert into questions(session, step) values (?, ?);', [session, x])
+		g.db.commit()
+	return jsonify(result="success")
+
 @app.route('/get_session', methods=['POST', 'GET'])
 def get_session():
 	session = request.args.get('session', '')
 	row = query_db('select * from sessions where session = ?;', [session], one=True)
 	# app.logger.info(row)
 	return jsonify(code=row[1], params=row[2])
+
+@app.route('/get_questions', methods=['POST', 'GET'])
+def get_question():
+	session = request.args.get('session', '')
+	step = request.args.get('step', '')
+
+	result = query_db('select question, line from questions where session = ? and step = ?;', [session, step])
+	# app.logger.info(row)
+	return jsonify(result)
 
 @app.route('/log_event', methods=['POST', 'GET'])
 def log_event():
