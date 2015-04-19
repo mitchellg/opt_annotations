@@ -880,16 +880,23 @@ ExecutionVisualizer.prototype.loadAnnotations = debounce(function() {
         }
       }
 
+      if (getUrlParameter("best_annotation") == "true") url = 'http://45.56.123.166:5000/get_best_annotation';
+      else url = 'http://45.56.123.166:5000/get_annotations'
+
       $.ajax({
         dataType: "jsonp",
         type: "POST",
-        url: 'http://45.56.123.166:5000/get_annotations',
+        url: url,
         data: data,
         success: function(d){
+          console.log(d);
           var annotations = d;
           for(var i = 0; i < d.length; i++){
             annotation_item = annotations[i];
-            line = annotation_item[3];
+            if (getUrlParameter("best_annotation") == "true") line = annotation_item[2];
+            else line = annotation_item[3];
+            console.log(line);
+            console.log(myViz.annotations[line]);
             myViz.annotations[line].push(annotation_item);
           }
 
@@ -3826,7 +3833,7 @@ AnnotationBubble.prototype.showStub = function() {
   }
 
   var classes = 'ui-tooltip-pgbootstrap ui-tooltip-pgbootstrap-stub ';
-  if(myBubble.parentViz.annotations[myBubble.qTipContentID()].length > 0){
+  if(myBubble.qTipContentID() in myBubble.parentViz.annotations && myBubble.parentViz.annotations[myBubble.qTipContentID()].length > 0){
     classes += 'ui-tooltip-pgbootstrap-has-content';
   }
 
@@ -3865,7 +3872,8 @@ AnnotationBubble.prototype.showStub = function() {
           // Don't show tooltip if any annotation edit window is open
           else if (bubble.state == 'edit') return;
         }
-        if(getUrlParameter("comparisonVoting") != "true") myBubble.showTooltip();
+        // if(getUrlParameter("comparisonVoting") != "true") myBubble.showTooltip();
+        myBubble.showTooltip();
         myBubble.parentViz.logEvent("hover", myBubble);
       },
       function() {
@@ -3895,7 +3903,8 @@ AnnotationBubble.prototype.showEditor = function() {
   var annotations_for_bubble = myBubble.parentViz.annotations[line];
   var annotations_html = "";
 
-  if(getUrlParameter("comparisonVoting") != "true"){
+  // if(getUrlParameter("comparisonVoting") != "true"){
+  if(true){
     var annotations_html = "<div style='max-height: 150px; overflow: auto; width:200px'>";
     for(var i = 0; i < annotations_for_bubble.length; i++){
       annotation_text = annotations_for_bubble[i][0];

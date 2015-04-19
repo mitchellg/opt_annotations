@@ -51,6 +51,43 @@ def get_annotations():
 	# app.logger.info(row[3])
 	return jsonify(result)
 
+@app.route('/get_best_annotation', methods=['POST', 'GET'])
+def get_best_annotation():
+	votes_tracker = {}
+	step = request.args.get('step', '')
+	session = request.args.get('session', '')
+	annotations = query_db('select annotation, id, line from annotations where session = ? AND step = ? order by votes desc;', [session, step])
+	for annotation in annotations:
+		if not annotation in votes_tracker:
+			votes_tracker[annotation] = {"good": 0.0, "bad": 0.0, "ratio": 0.0}
+		annotation_id = annotation[1]
+		votes = query_db('select annotation_id_1, annotation_id_2, vote from comparison_votes where annotation_id_1 = ? OR annotation_id_2 = ?;', [annotation_id, annotation_id])
+		for vote in votes:
+			if vote[2] == "better":
+				if annotation_id == vote[0]:
+					votes_tracker[annotation]["bad"] += 1
+				elif annotation_id == vote[1]:
+					votes_tracker[annotation]["good"] += 1
+			if vote[2] == "worse":
+				if annotation_id == vote[0]:
+					votes_tracker[annotation]["good"] += 1
+				elif annotation_id == vote[1]:
+					votes_tracker[annotation]["bad"] += 1
+		if votes_tracker[annotation]["bad"] == 0:
+			# Add .1 so it beats competitors with 1 bad vote (e.g. 9/0 should be better than 9/1)
+			votes_tracker[annotation]["ratio"] = votes_tracker[annotation]["good"] + .1
+		else:
+			votes_tracker[annotation]["ratio"] = votes_tracker[annotation]["good"] / votes_tracker[annotation]["bad"]
+
+	best_annotation = None
+	best_ratio = 0
+	for annotation in votes_tracker:
+		if votes_tracker[annotation]["ratio"] > best_ratio:
+			best_ratio = votes_tracker[annotation]["ratio"]
+			best_annotation = annotation
+	app.logger.info(votes_tracker)
+	return jsonify([best_annotation])
+
 @app.route('/post_session', methods=['POST', 'GET'])
 def post_app_state():
 	code = request.args.get('code', '')
@@ -142,4 +179,4 @@ if __name__ == "__main__":
 	handler = RotatingFileHandler('foo.log', maxBytes=10000, backupCount=1)
 	handler.setLevel(logging.INFO)
 	app.logger.addHandler(handler)
-	app.run(host='45.56.123.166')
+	app.run(port=5000, host='45.56.123.166')
