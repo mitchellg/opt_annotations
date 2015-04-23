@@ -112,6 +112,20 @@ def log_comparison_vote():
 	g.db.commit()
 	return jsonify(result="success")
 
+@app.route('/vote_best_annotation', methods=['POST', 'GET'])
+def vote_best_annotation():
+	# annotation 2 is x than annotation 1
+	annotation_id_1 = request.args.get('annotation_id', '')
+	annotation_id_2 = 'n/a'
+	vote = 'vote_best_annotation'
+	mg_user_id = request.args.get('mg_user_id', '')
+	pg_user_id = request.args.get('pg_user_id', '')
+	time = request.args.get('time', '')
+
+	g.db.execute('insert into comparison_votes(annotation_id_1, annotation_id_2, vote, mg_user_id, pg_user_id, time) values (?, ?, ?, ?, ?, ?);', [annotation_id_1, annotation_id_2, vote, mg_user_id, pg_user_id, time])
+	g.db.commit()
+	return jsonify(result="success")
+
 @app.route('/add_questions_to_db', methods=['POST', 'GET'])
 def add_questions_to_db():
 	session = "jo8ymq48yse89f6r"
