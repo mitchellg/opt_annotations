@@ -47,12 +47,15 @@ def post_annotation():
 def get_annotations():
 	step = request.args.get('step', '')
 	session = request.args.get('session', '')
-	result = query_db('select annotation, votes, id, line from annotations where session = ? AND step = ? order by votes desc;', [session, step])
+	if session == 'r5lc4o2l9x561or':
+		result = query_db('select annotation, votes, id, line from annotations where (session = ? OR session = ?) AND step = ? order by votes desc;', [session, "g685ii5eqb1kbj4i", step])
+	else:
+		result = query_db('select annotation, votes, id, line from annotations where session = ? AND step = ? order by votes desc;', [session, step])
 	# app.logger.info(row[3])
 	return jsonify(result)
 
-@app.route('/get_best_annotation', methods=['POST', 'GET'])
-def get_best_annotation():
+@app.route('/get_best_annotation_comparison', methods=['POST', 'GET'])
+def get_best_annotation_comparison():
 	votes_tracker = {}
 	step = request.args.get('step', '')
 	session = request.args.get('session', '')
@@ -84,6 +87,36 @@ def get_best_annotation():
 	for annotation in votes_tracker:
 		if votes_tracker[annotation]["ratio"] > best_ratio:
 			best_ratio = votes_tracker[annotation]["ratio"]
+			best_annotation = annotation
+	app.logger.info(votes_tracker)
+	return jsonify([best_annotation])
+
+
+@app.route('/get_best_annotation_voting', methods=['POST', 'GET'])
+def get_best_annotation_voting():
+	votes_tracker = {}
+	step = request.args.get('step', '')
+	session = request.args.get('session', '')
+
+	if session == 'r5lc4o2l9x561or':
+		result = query_db('select annotation, votes, id, line from annotations where (session = ? OR session = ?) AND step = ? order by votes desc;', [session, "g685ii5eqb1kbj4i", step])
+	else:
+		annotations = query_db('select annotation, id, line from annotations where session = ? AND step = ? order by votes desc;', [session, step])
+
+	for annotation in annotations:
+		if not annotation in votes_tracker:
+			votes_tracker[annotation] = {"votes": 0}
+		annotation_id = annotation[1]
+		votes = query_db('select annotation_id_1, vote from comparison_votes where annotation_id_1 = ?;', [annotation_id])
+		for vote in votes:
+			if vote[1] == "vote_best_annotation":
+				votes_tracker[annotation]["votes"] += 1
+
+	best_annotation = None
+	most_votes = 0
+	for annotation in votes_tracker:
+		if votes_tracker[annotation]["votes"] > most_votes:
+			most_votes = votes_tracker[annotation]["votes"]
 			best_annotation = annotation
 	app.logger.info(votes_tracker)
 	return jsonify([best_annotation])
@@ -193,4 +226,4 @@ if __name__ == "__main__":
 	handler = RotatingFileHandler('foo.log', maxBytes=10000, backupCount=1)
 	handler.setLevel(logging.INFO)
 	app.logger.addHandler(handler)
-	app.run(port=5000, host='45.56.123.166')
+	app.run(port=5001, host='45.56.123.166')
