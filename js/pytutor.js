@@ -693,6 +693,11 @@ ExecutionVisualizer.prototype.jumpToRandomStep = function() {
   myViz.renderStep(stepToJumpTo);
 }
 
+ExecutionVisualizer.prototype.jumpToStep = function(stepToJumpTo) {
+  var myViz = this;
+  myViz.renderStep(stepToJumpTo);
+}
+
 ExecutionVisualizer.prototype.showVizHeaderViewMode = function() {
   var titleVal = this.domRoot.find('#vizTitleEditor').val().trim();
   var  descVal = this.domRoot.find('#vizDescriptionEditor').val().trim();
@@ -3924,7 +3929,8 @@ AnnotationBubble.prototype.showEditor = function() {
         annotations_html = annotations_html + '<table><tr> <td><input class="vote_best_annotation" id="vote_best_annotation' + annotation_id + '" type="image" src="css/Very-Basic-Checkmark-icon" style="width:40px;" alt="Upvote" onclick="vote_best_annotation(' + annotation_id + ')"></td> <td style="margin-left:10px;"><p>' + annotation_text + '</p></td></tr></table><hr>'; 
       }
       else {
-        annotations_html = annotations_html + '<p> <input id="upvote_annotation_' + annotation_id + '" type="image" src="css/thumbs-up-icon-black-hi.png" style="width:10px;" alt="Upvote" onclick="upvote_annotation(' + annotation_id + ')">  ' + annotation_text + '</p><hr>'; 
+        // annotations_html = annotations_html + '<p> <input id="upvote_annotation_' + annotation_id + '" type="image" src="css/thumbs-up-icon-black-hi.png" style="width:10px;" alt="Upvote" onclick="upvote_annotation(' + annotation_id + ')">  ' + annotation_text + '</p><hr>'; 
+        annotations_html = annotations_html + '<p>' + annotation_text + '</p><hr>'; 
       }
     }
     annotations_html = annotations_html + "</div>"

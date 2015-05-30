@@ -99,7 +99,7 @@ def get_best_annotation_voting():
 	session = request.args.get('session', '')
 
 	if session == 'r5lc4o2l9x561or':
-		result = query_db('select annotation, votes, id, line from annotations where (session = ? OR session = ?) AND step = ? order by votes desc;', [session, "g685ii5eqb1kbj4i", step])
+		result = query_db('select annotation, id, line from annotations where (session = ? OR session = ?) AND step = ? order by votes desc;', [session, "g685ii5eqb1kbj4i", step])
 	else:
 		annotations = query_db('select annotation, id, line from annotations where session = ? AND step = ? order by votes desc;', [session, step])
 

@@ -14,7 +14,9 @@ $(document).ready(function() {
 		    var code = JSON.parse(d.code);
 		    console.log(code);
 		    var myVis = new ExecutionVisualizer('happyDiv', code, params);
+		    // alert(getUrlParameter('jumpToStep'));
 		    if(getUrlParameter('jumpToRandomStep') == 'true') myVis.jumpToRandomStep();
+		    else if(getUrlParameter('jumpToStep') != '') myVis.jumpToStep(parseInt(getUrlParameter('jumpToStep')));
 		  }
 		});
 	}

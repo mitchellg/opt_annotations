@@ -47,11 +47,14 @@
 <script>
 	// var sessions = ["6f1tnvrh8nlmobt9", "fdsahu0yq9rh03f"];
 	var sessions = ["r5lc4o2l9x561or"];
+	var steps = ["29", "27", "24", "17", "16", "12", "11"];
 	var session = sessions[Math.floor(Math.random() * sessions.length)];
+	var step = steps[Math.floor(Math.random() * steps.length)];
 
 	var uuid = getUrlParameter("opt_uuid");
 	// var urlForIframeLink = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo.html?session=" + session + "&jumpToRandomStep=true&opt_uuid=" + uuid + "&comparisonVoting=true";
-	var urlForIframeLink = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo.html?session=" + session + "&jumpToRandomStep=false&opt_uuid=" + uuid + "&pick_best_annotation_mode=true";
+	// var urlForIframeLink = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo.html?session=" + session + "&jumpToRandomStep=false&opt_uuid=" + uuid + "&pick_best_annotation_mode=true";
+	var urlForIframeLink = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo.html?session=" + session + "&jumpToStep=" + step + "&opt_uuid=" + uuid;
 	$("#urlInFrame").attr("href", urlForIframeLink);
 
 	var urlForIframe = "http://45.56.123.166/~mgordon/OnlinePythonTutor/v3/embedding-demo-blur.html?session=" + session + "&opt_uuid=" + uuid;
